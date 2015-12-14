@@ -1,37 +1,72 @@
 
-function MetricsChart(id, valueMask, metricsUrl) {
+function MetricsChart(chartId, valueMask, metricsUrls) {
 
-    var extractDataFromJson = function (jsonData, mask) {
-        var maskParts = mask.split(".");
-        var currentPaths = {"value": jsonData};
+    var self = this;
+    var data = MetricsChart.dataHandler.extractDataFromJson(metrics_data_1, valueMask);
 
-        for (var i = 0; i < maskParts.length; i++) {
-            var maskPart = maskParts[i];
-            var nextPaths = {};
-            for (var pathName in currentPaths) {
-                var json = currentPaths[pathName];
-                if (maskPart.indexOf("*") != -1) {
-                    if (maskPart == "*") {
-                        for (var key in json) {
-                            nextPaths[pathName + "." + key] = json[key];
-                        }
-                    }
-                }
-                else {
-                    if (json.hasOwnProperty(maskPart)) {
-                        nextPaths[pathName + "." + maskPart] = json[maskPart];
-                    }
-                }
-            }
-            currentPaths = nextPaths;
-        }
+    var datasets = [];
+    for (var key in data) {
+        datasets.push({
+            label: key,
+            strokeColor: "#"+((1<<24)*Math.random()|0).toString(16)/*"rgba(50,200,50,0.9)"*/,
+            data: [data[key]]
+        });
+    }
 
-        console.log(currentPaths);
-        return currentPaths;
+    startingData = {
+        labels: ["10:31:19"],
+        datasets: datasets
     };
 
-    valueMask = "last5min.endpoints.*.status_codes.*";
-    var plainData = extractDataFromJson(metrics_data_1, valueMask);
+    var context = $("#" + chartId).get(0).getContext("2d");
+    var chart = new Chart(context).Line(startingData,
+        {
+            animationSteps: 15,
+            datasetFill : false,
+            pointDotRadius : 2,
+            datasetStrokeWidth : 3,
+            bezierCurve : false
+    });
+
+    legend($("#legend").get(0), startingData);
+}
+
+MetricsChart.dataHandler = new MetricsDataHandler();
+
+
+function MetricsDataHandler() {
+
+    this.extractDataFromJson = function(jsonData, mask) {
+
+        var flattenJson = flattenObject(jsonData);
+        console.log("flattened json:");
+        console.log(flattenJson);
+
+        var regexp = maskToRegexp(mask);
+
+        var matchingData = {};
+        for (var jsonPath in flattenJson) {
+            if (regexp.test(jsonPath)) {
+                matchingData[jsonPath] = flattenJson[jsonPath];
+            }
+        }
+        console.log("data matching mask:");
+        console.log(matchingData);
+
+        return matchingData;
+    };
+
+    var maskToRegexp = function(mask) {
+        var regexpMask = mask;
+        regexpMask = regexpMask.replace(/\./g, "\\.");
+        regexpMask = regexpMask.replace(/\*/g, ".+");
+        regexpMask = regexpMask.replace(/\?/g, ".?");
+        regexpMask = "^" + regexpMask + "$";
+        console.log("regexp mask:");
+        console.log(regexpMask);
+
+        return new RegExp(regexpMask);
+    };
 }
 
 metrics_data_1 = {
@@ -60,7 +95,8 @@ metrics_data_1 = {
             },
             "get_topics": {
                 "status_codes": {
-                    "200": 96
+                    "200": 95,
+                    "404": 1
                 },
                 "calls_per_second": 0.32,
                 "count": 96
