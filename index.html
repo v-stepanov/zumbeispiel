@@ -38,7 +38,12 @@
         var metricsChart = new MetricsChart(
                 "metrics-chart",
                 "last5min.endpoints.*.status_codes.2??",
-                "http://localhost:8081/metrics"
+                "http://localhost:8081/metrics",
+                {
+                    "legendId": "legend",
+                    "intervalMs": 2000,
+                    "iterations": 10
+                }
         );
     });
 </script>

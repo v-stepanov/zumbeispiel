@@ -1,34 +1,86 @@
 
-function MetricsChart(chartId, valueMask, metricsUrls) {
+function MetricsChart(chartId, valueMask, metricsUrls, config) {
 
-    var self = this;
-    var data = MetricsChart.dataHandler.extractDataFromJson(metrics_data_1, valueMask);
-
-    var datasets = [];
-    for (var key in data) {
-        datasets.push({
-            label: key,
-            strokeColor: "#"+((1<<24)*Math.random()|0).toString(16)/*"rgba(50,200,50,0.9)"*/,
-            data: [data[key]]
-        });
-    }
-
-    startingData = {
-        labels: ["10:31:19"],
-        datasets: datasets
+    var createLegend = function() {
+        if (!(config.legendId === undefined)) {
+            legend($("#" + config.legendId).get(0), self.chartData);
+        }
     };
 
-    var context = $("#" + chartId).get(0).getContext("2d");
-    var chart = new Chart(context).Line(startingData,
-        {
-            animationSteps: 15,
-            datasetFill : false,
-            pointDotRadius : 2,
-            datasetStrokeWidth : 3,
-            bezierCurve : false
-    });
+    var createChart = function() {
+        self.chartData = {
+            labels: self.timeLabels,
+            datasets: self.metricsData
+        };
+        console.log(self.chartData);
 
-    legend($("#legend").get(0), startingData);
+        var context = $("#" + chartId).get(0).getContext("2d");
+        self.chart = new Chart(context).Line(self.chartData, defaultChartProperties);
+    };
+
+    var updateData = function() {
+        // todo: make http request to metrics endpoint
+        appendData(MetricsChart.utils.newDummyData());
+        setTimeout(updateData, config.intervalMs);
+    };
+
+    var appendData = function(newData) {
+
+        if (self.timeLabels.length >= config.iterations) {
+            self.timeLabels.splice(0, 1);
+            for (var j = 0; j < self.metricsData.length; j++) {
+                self.metricsData[j].data.splice(0, 1);
+            }
+        }
+
+        self.timeLabels.push((new Date()).toLocaleTimeString());
+
+        var currentData = MetricsChart.dataHandler.extractDataFromJson(newData, valueMask);
+        for (var key in currentData) {
+
+            var foundMatchingMetrics = false;
+
+            for (var i = 0; i < self.metricsData.length; i++) {
+                var currentMetricData = self.metricsData[i];
+                if (key == currentMetricData.label) {
+                    currentMetricData.data.push(currentData[key]);
+                    foundMatchingMetrics = true;
+                    break;
+                }
+            }
+
+            if (!foundMatchingMetrics) {
+                var data = [];
+                for (var j = 0; j < self.timeLabels.length - 1; j++) {
+                    data.push(0)
+                }
+                data.push(currentData[key]);
+                self.metricsData.push({
+                    label: key,
+                    strokeColor: MetricsChart.utils.randomColor(),
+                    data: [currentData[key]]
+                })
+            }
+        }
+        createChart();
+        createLegend();
+    };
+
+    var defaultChartProperties = {
+        animationSteps: 1,
+        datasetFill : false,
+        pointDotRadius : 2,
+        datasetStrokeWidth : 3,
+        bezierCurve : false
+    };
+
+    config.intervalMs = typeof config.intervalMs === 'undefined' ? 5000 : config.intervalMs;
+
+    var self = this;
+    self.timeLabels = [];
+    self.metricsData = [];
+
+    updateData();
 }
 
 MetricsChart.dataHandler = new MetricsDataHandler();
@@ -69,196 +121,48 @@ function MetricsDataHandler() {
     };
 }
 
-metrics_data_1 = {
-    "last5min": {
-        "endpoints": {
-            "post_events": {
-                "status_codes": {
-                    "201": 5
-                },
-                "calls_per_second": 0.016666666666666666,
-                "count": 5
-            },
-            "get_partitions": {
-                "status_codes": {
-                    "200": 154
-                },
-                "calls_per_second": 0.5133333333333333,
-                "count": 154
-            },
-            "get_metrics": {
-                "status_codes": {
-                    "200": 5
-                },
-                "calls_per_second": 0.016666666666666666,
-                "count": 5
-            },
-            "get_topics": {
-                "status_codes": {
-                    "200": 95,
-                    "404": 1
-                },
-                "calls_per_second": 0.32,
-                "count": 96
-            },
-            "get_events_from_single_partition": {
-                "status_codes": {
-                    "200": 47
-                },
-                "calls_per_second": 0.15666666666666668,
-                "count": 47
-            }
-        },
-        "events": {
-            "eventstore.article.411": {
-                "pushed": {
-                    "stups_shop-updater-hack": 68
-                },
-                "consumed": {
-                    "stups_event-pipeline-stg": 48,
-                    "stups_event-pipeline": 50,
-                    "stups_event-pipeline-prd": 58
-                }
-            },
-            "eventstore.article.401": {
-                "pushed": {
-                    "stups_shop-updater-hack": 50
-                },
-                "consumed": {
-                    "stups_event-pipeline-stg": 41,
-                    "stups_event-pipeline": 48,
-                    "stups_event-pipeline-prd": 53
-                }
-            },
-            "eventstore.price-stock.1": {
-                "pushed": {
-                    "stups_shop-updater-hack": 420
-                },
-                "consumed": {}
-            }
-        }
+
+MetricsChart.utils = {
+
+    randomColor: function() {
+        return "#"+((1<<24)*Math.random()|0).toString(16);
     },
-    "last1min": {
-        "endpoints": {
-            "post_events": {
-                "status_codes": {
-                    "201": 1
-                },
-                "calls_per_second": 0.016666666666666666,
-                "count": 1
-            },
-            "get_partitions": {
-                "status_codes": {
-                    "200": 30
-                },
-                "calls_per_second": 0.5,
-                "count": 30
-            },
-            "get_metrics": {
-                "status_codes": {
-                    "200": 1
-                },
-                "calls_per_second": 0.016666666666666666,
-                "count": 1
-            },
-            "get_topics": {
-                "status_codes": {
-                    "200": 14
-                },
-                "calls_per_second": 0.23333333333333334,
-                "count": 14
-            },
-            "get_events_from_single_partition": {
-                "status_codes": {
-                    "200": 11
-                },
-                "calls_per_second": 0.18333333333333332,
-                "count": 11
-            }
-        },
-        "events": {
-            "eventstore.article.411": {
-                "pushed": {
-                    "stups_shop-updater-hack": 29
-                },
-                "consumed": {
-                    "stups_event-pipeline-stg": 14,
-                    "stups_event-pipeline": 14,
-                    "stups_event-pipeline-prd": 20
-                }
-            }
-        }
+
+    randomInt: function(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     },
-    "last15min": {
-        "endpoints": {
-            "post_events": {
-                "status_codes": {
-                    "201": 34
-                },
-                "calls_per_second": 0.03777777777777778,
-                "count": 34
-            },
-            "get_partitions": {
-                "status_codes": {
-                    "200": 465
-                },
-                "calls_per_second": 0.5166666666666667,
-                "count": 465
-            },
-            "get_metrics": {
-                "status_codes": {
-                    "200": 15
-                },
-                "calls_per_second": 0.016666666666666666,
-                "count": 15
-            },
-            "get_topics": {
-                "status_codes": {
-                    "200": 272
-                },
-                "calls_per_second": 0.3022222222222222,
-                "count": 272
-            },
-            "get_events_from_single_partition": {
-                "status_codes": {
-                    "200": 168
-                },
-                "calls_per_second": 0.18666666666666668,
-                "count": 168
-            }
-        },
-        "events": {
-            "eventstore.article.411": {
-                "pushed": {
-                    "stups_shop-updater-hack": 315
-                },
-                "consumed": {
-                    "stups_event-pipeline-stg": 132,
-                    "stups_event-pipeline": 157,
-                    "stups_event-pipeline-prd": 142
+
+    newDummyData: function() {
+        return {
+            "last5min": {
+                "endpoints": {
+                    "post_events": {
+                        "status_codes": {
+                            "201": MetricsChart.utils.randomInt(10, 20)
+                        }
+                    },
+                    "get_partitions": {
+                        "status_codes": {
+                            "200": MetricsChart.utils.randomInt(120, 180)
+                        }
+                    },
+                    "get_metrics": {
+                        "status_codes": {
+                            "200": MetricsChart.utils.randomInt(3, 12)
+                        }
+                    },
+                    "get_topics": {
+                        "status_codes": {
+                            "200": MetricsChart.utils.randomInt(80, 120),
+                            "404": MetricsChart.utils.randomInt(1, 3)
+                        }
+                    },
+                    "get_events_from_single_partition": {
+                        "status_codes": {
+                            "200": MetricsChart.utils.randomInt(40, 100)
+                        }
+                    }
                 }
-            },
-            "eventstore.article.401": {
-                "pushed": {
-                    "stups_shop-updater-hack": 135
-                },
-                "consumed": {
-                    "stups_event-pipeline-stg": 181,
-                    "stups_event-pipeline": 166,
-                    "stups_event-pipeline-prd": 169
-                }
-            },
-            "eventstore.price-stock.1": {
-                "pushed": {
-                    "stups_shop-updater-hack": 2141
-                },
-                "consumed": {}
-            },
-            "eventstore.article.1": {
-                "pushed": {
-                    "stups_shop-updater-hack": 5442
-                },
-                "consumed": {}
             }
         }
     }
