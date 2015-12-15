@@ -3,6 +3,7 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
 
     var createChart = function() {
         self.chartOptions = {
+            title: "Amount of successful requests",
             hAxis: {
                 format: 'hh:mm:ss'
             },
@@ -26,9 +27,22 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
     };
 
     var updateData = function() {
-        // todo: make http request to metrics endpoint
+        $.ajax({
+            url: metricsUrls,
+            type: "GET",
+            success: function(data) {
+                appendData(data);
+            },
+            complete: function() {
+                console.log("complete");
+                setTimeout(updateData, config.intervalMs);
+            }
+        });
+        // using dummy data:
+        /*
         appendData(MetricsChart.utils.newDummyData());
         setTimeout(updateData, config.intervalMs);
+        */
     };
 
     var appendData = function(newData) {
