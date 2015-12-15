@@ -23,32 +23,45 @@
     <script type="text/javascript" src="https://gist.github.com/penguinboy/762197/raw/df68d7225ec16aa63b3fdee23fdc7ac18e282786/Object%2520Flatten"></script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
     <script type="text/javascript" src="zumbeispiel.js"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" crossorigin="anonymous">
     <script>
-        $( document ).ready(function() {
-            var id = "chart" + MetricsChart.utils.randomInt(0, 100000);
-            $("body").append("<div id='" + id + "'></div>");
-            $("#button").click(function () {
+        $(document).ready(function() {
+            $("#add-button").click(function () {
+                var id = "chart" + MetricsChart.utils.randomInt(0, 100000);
+                $("body").append("<div id='" + id + "'></div>");
                 new MetricsChart(
                         id,
-                        $("#metrics-mask").val(),
+                        $("#metric-field").val(),
                         "/metrics",
                         {
                             "intervalMs": 60000,
                             "iterations": 60
                         }
                 );
+                $("#metric-field").val("");
             });
         });
     </script>
 </head>
 <body>
-<div>
-    <label for="chart-name-field">Chart Title</label><input id="chart-name-field" type="text" value=""/>
-    <label for="chart-name-field">Metrics</label><input id="metrics-mask" type="text" value="" width="200px"/>
-    <button id="button" class="btn btn-success">Create Chart</button>
+<div class="container">
+    <div class="row">&nbsp;</div>
+    <div class="row">
+        <div role="main">
+            <form class="form-horizontal">
+                <div class="form-group">
+                    <label for="metric-field" class="col-sm-1 control-label">Metric:</label>
+                    <div class="input-group col-sm-11">
+                        <input id="metric-field" type="text" class="form-control" value="last1min.endpoints.*.status_codes.2??">
+                        <span class="input-group-btn">
+                            <button id="add-button" class="btn btn-success" type="button">Create Chart</button>
+                        </span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
-
 <div id="metrics-chart"></div>
 </body>
 </html>
