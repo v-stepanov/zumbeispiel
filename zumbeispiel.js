@@ -1,21 +1,24 @@
 
 function MetricsChart(chartId, valueMask, metricsUrls, config) {
 
-    var createLegend = function() {
-        if (!(config.legendId === undefined)) {
-            legend($("#" + config.legendId).get(0), self.chartData);
-        }
-    };
-
     var createChart = function() {
-        self.chartData = {
-            labels: self.timeLabels,
-            datasets: self.metricsData
+        self.chartOptions = {
+            hAxis: {
+                format: 'hh:mm:ss'
+            },
+            vAxis: {
+                title: 'requests'
+            },
+            legend: {
+                position: 'right'
+            },
+            fontSize: 14,
+            width: "100%",
+            height: 300,
+            chartArea: {  left: "5%", width: "75%", height: "80%"}
         };
-        console.log(self.chartData);
 
-        var context = $("#" + chartId).get(0).getContext("2d");
-        self.chart = new Chart(context).Line(self.chartData, defaultChartProperties);
+        self.chart = new google.visualization.LineChart(document.getElementById(chartId));
     };
 
     var updateData = function() {
@@ -25,61 +28,45 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
     };
 
     var appendData = function(newData) {
-
-        if (self.timeLabels.length >= config.iterations) {
-            self.timeLabels.splice(0, 1);
-            for (var j = 0; j < self.metricsData.length; j++) {
-                self.metricsData[j].data.splice(0, 1);
-            }
-        }
-
-        self.timeLabels.push((new Date()).toLocaleTimeString());
-
         var currentData = MetricsChart.dataHandler.extractDataFromJson(newData, valueMask);
+
         for (var key in currentData) {
-
-            var foundMatchingMetrics = false;
-
-            for (var i = 0; i < self.metricsData.length; i++) {
-                var currentMetricData = self.metricsData[i];
-                if (key == currentMetricData.label) {
-                    currentMetricData.data.push(currentData[key]);
-                    foundMatchingMetrics = true;
+            var datasetPresent = false;
+            for (var i = 1; i < self.dataTable.getNumberOfColumns(); i++) {
+                if (key == self.dataTable.getColumnLabel(i)) {
+                    datasetPresent = true;
                     break;
                 }
             }
-
-            if (!foundMatchingMetrics) {
-                var data = [];
-                for (var j = 0; j < self.timeLabels.length - 1; j++) {
-                    data.push(0)
-                }
-                data.push(currentData[key]);
-                self.metricsData.push({
-                    label: key,
-                    strokeColor: MetricsChart.utils.randomColor(),
-                    data: [currentData[key]]
-                })
+            if (!datasetPresent) {
+                self.dataTable.addColumn("number", key);
             }
         }
-        createChart();
-        createLegend();
-    };
 
-    var defaultChartProperties = {
-        animationSteps: 1,
-        datasetFill : false,
-        pointDotRadius : 2,
-        datasetStrokeWidth : 3,
-        bezierCurve : false
+        var newRow = [new Date()];
+        for (i = 1; i < self.dataTable.getNumberOfColumns(); i++) {
+            var currentLabel = self.dataTable.getColumnLabel(i);
+            if (currentData.hasOwnProperty(currentLabel)) {
+                newRow.push(currentData[currentLabel]);
+            }
+            else {
+                newRow.push(0);
+            }
+        }
+
+        self.dataTable.addRow(newRow);
+        self.chart.draw(self.dataTable, self.chartOptions);
     };
 
     config.intervalMs = typeof config.intervalMs === 'undefined' ? 5000 : config.intervalMs;
+    var datasetsPositions = [];
 
     var self = this;
-    self.timeLabels = [];
-    self.metricsData = [];
 
+    self.dataTable = new google.visualization.DataTable();
+    self.dataTable.addColumn('datetime', 'X');
+
+    createChart();
     updateData();
 }
 

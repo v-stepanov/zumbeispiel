@@ -3,51 +3,27 @@
 <head>
     <meta charset="utf-8">
     <title>Zum Beispiel</title>
-    <script type="text/javascript" src="http://www.chartjs.org/assets/Chart.min.js"></script>
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1', {packages: ['corechart']});
+        google.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            var metricsChart = new MetricsChart(
+                    "metrics-chart",
+                    "last5min.endpoints.*.status_codes.2??",
+                    "http://localhost:8081/metrics",
+                    {
+                        "intervalMs": 2000,
+                        "iterations": 10
+                    }
+            );
+        }
+    </script>
     <script type="text/javascript" src="https://gist.github.com/penguinboy/762197/raw/df68d7225ec16aa63b3fdee23fdc7ac18e282786/Object%2520Flatten"></script>
-    <script type="text/javascript" src="https://raw.githubusercontent.com/bebraw/Chart.js.legend/master/src/legend.js"></script>
     <script type="text/javascript" src="zumbeispiel.js"></script>
-    <style type="text/css">
-        body {
-            font-family: sans-serif;
-            font-size: 0.8em;
-            color: #666666;
-        }
-
-        .legend .title {
-            margin-bottom: 0.5em;
-            padding: 0 0.3em;
-        }
-
-        .legend .color-sample {
-            display: block;
-            float: left;
-            width: 1em;
-            height: 1em;
-            border-radius: 0.5em;
-            margin-right: 0.5em;
-        }
-    </style>
 </head>
 <body>
-<canvas id="metrics-chart" width="600" height="300"></canvas>
-<div id="legend" style="width: 600px;"></div>
-
-<script type="text/javascript">
-    $(document).ready(function() {
-        var metricsChart = new MetricsChart(
-                "metrics-chart",
-                "last5min.endpoints.*.status_codes.2??",
-                "http://localhost:8081/metrics",
-                {
-                    "legendId": "legend",
-                    "intervalMs": 2000,
-                    "iterations": 10
-                }
-        );
-    });
-</script>
-
+<div id="metrics-chart"></div>
 </body>
 </html>
