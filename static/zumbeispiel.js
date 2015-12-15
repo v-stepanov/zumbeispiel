@@ -3,7 +3,7 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
 
     var createChart = function() {
         self.chartOptions = {
-            title: "Amount of successful requests",
+            title: "Chart for: " + valueMask,
             hAxis: {
                 format: 'hh:mm:ss'
             },
