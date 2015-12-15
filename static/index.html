@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Zum Beispiel</title>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load('visualization', '1', {packages: ['corechart']});
+        google.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            var metricsChart = new MetricsChart(
+                    "metrics-chart",
+                    "last1min.endpoints.*.status_codes.2??",
+                    "/metrics",
+                    {
+                        "intervalMs": 60000,
+                        "iterations": 60
+                    }
+            );
+        }
+    </script>
+    <script type="text/javascript" src="https://gist.github.com/penguinboy/762197/raw/df68d7225ec16aa63b3fdee23fdc7ac18e282786/Object%2520Flatten"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="zumbeispiel.js"></script>
+</head>
+<body>
+<div id="metrics-chart"></div>
+</body>
+</html>
