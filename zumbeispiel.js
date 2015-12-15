@@ -15,7 +15,11 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
             fontSize: 14,
             width: "100%",
             height: 300,
-            chartArea: {  left: "5%", width: "75%", height: "80%"}
+            chartArea: {
+                left: "5%",
+                width: "75%",
+                height: "80%"
+            }
         };
 
         self.chart = new google.visualization.LineChart(document.getElementById(chartId));
@@ -30,21 +34,23 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
     var appendData = function(newData) {
         var currentData = MetricsChart.dataHandler.extractDataFromJson(newData, valueMask);
 
-        for (var key in currentData) {
-            var datasetPresent = false;
-            for (var i = 1; i < self.dataTable.getNumberOfColumns(); i++) {
-                if (key == self.dataTable.getColumnLabel(i)) {
-                    datasetPresent = true;
-                    break;
-                }
-            }
-            if (!datasetPresent) {
-                self.dataTable.addColumn("number", key);
-            }
-        }
+        trackColumnsAge(currentData);
+        addNewColumnsIfNecessary(currentData);
+        addNewDataRow(currentData);
+        removeOldData();
 
+        self.chart.draw(self.dataTable, self.chartOptions);
+    };
+
+    function removeOldData() {
+        if (self.dataTable.getNumberOfRows() > config.iterations) {
+            self.dataTable.removeRow(0);
+        }
+    }
+
+    function addNewDataRow(currentData) {
         var newRow = [new Date()];
-        for (i = 1; i < self.dataTable.getNumberOfColumns(); i++) {
+        for (var i = 1; i < self.dataTable.getNumberOfColumns(); i++) {
             var currentLabel = self.dataTable.getColumnLabel(i);
             if (currentData.hasOwnProperty(currentLabel)) {
                 newRow.push(currentData[currentLabel]);
@@ -53,15 +59,50 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
                 newRow.push(0);
             }
         }
-
         self.dataTable.addRow(newRow);
-        self.chart.draw(self.dataTable, self.chartOptions);
+    }
+
+    var addNewColumnsIfNecessary = function(currentData) {
+        for (var key in currentData) {
+            var datasetPresent = getColumnIndexByLabel(key) != -1;
+            if (!datasetPresent) {
+                var newColumnIndex = self.dataTable.addColumn("number", key);
+                for (i = 0; i < self.dataTable.getNumberOfRows(); i++) {
+                    self.dataTable.setValue(i, newColumnIndex, 0)
+                }
+            }
+        }
+    };
+
+    var trackColumnsAge = function(currentData) {
+        for (var key in currentData) {
+            self.dataAge[key] = 0;
+        }
+        for (key in self.dataAge) {
+            if (self.dataAge[key] > config.iterations) {
+                var columnIndex = getColumnIndexByLabel(key);
+                self.dataTable.removeColumn(columnIndex);
+                delete self.dataAge[key];
+            } else {
+                self.dataAge[key]++;
+            }
+        }
+    };
+
+    var getColumnIndexByLabel = function(columnLabel) {
+        for (var i = 1; i < self.dataTable.getNumberOfColumns(); i++) {
+            if (columnLabel == self.dataTable.getColumnLabel(i)) {
+                return i;
+            }
+        }
+        return -1;
     };
 
     config.intervalMs = typeof config.intervalMs === 'undefined' ? 5000 : config.intervalMs;
-    var datasetsPositions = [];
 
     var self = this;
+
+    self.dataAge = {};
 
     self.dataTable = new google.visualization.DataTable();
     self.dataTable.addColumn('datetime', 'X');
@@ -108,6 +149,7 @@ function MetricsDataHandler() {
     };
 }
 
+blah = 0;
 
 MetricsChart.utils = {
 
@@ -120,7 +162,8 @@ MetricsChart.utils = {
     },
 
     newDummyData: function() {
-        return {
+        blah++;
+        var json= {
             "last5min": {
                 "endpoints": {
                     "post_events": {
@@ -151,6 +194,14 @@ MetricsChart.utils = {
                     }
                 }
             }
+        };
+        if (blah < 3) {
+            json["last5min"]["endpoints"]["blah"] = {
+                "status_codes": {
+                    "201": MetricsChart.utils.randomInt(100, 200)
+                }
+            }
         }
+        return json;
     }
 };
