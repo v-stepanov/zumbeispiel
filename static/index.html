@@ -23,8 +23,32 @@
     <script type="text/javascript" src="https://gist.github.com/penguinboy/762197/raw/df68d7225ec16aa63b3fdee23fdc7ac18e282786/Object%2520Flatten"></script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
     <script type="text/javascript" src="zumbeispiel.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <script>
+        $( document ).ready(function() {
+            var id = "chart" + MetricsChart.utils.randomInt(0, 100000);
+            $("body").append("<div id='" + id + "'></div>");
+            $("#button").click(function () {
+                new MetricsChart(
+                        id,
+                        $("#metrics-mask").val(),
+                        "/metrics",
+                        {
+                            "intervalMs": 60000,
+                            "iterations": 60
+                        }
+                );
+            });
+        });
+    </script>
 </head>
 <body>
+<div>
+    <label for="chart-name-field">Chart Title</label><input id="chart-name-field" type="text" value=""/>
+    <label for="chart-name-field">Metrics</label><input id="metrics-mask" type="text" value="" width="200px"/>
+    <button id="button" class="btn btn-success">Create Chart</button>
+</div>
+
 <div id="metrics-chart"></div>
 </body>
 </html>
