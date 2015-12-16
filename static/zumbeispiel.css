@@ -5,3 +5,7 @@ body {
 .chart-container {
     margin-top: 15px;
 }
+
+.bootstrap-select {
+    width: 350px !important;
+}

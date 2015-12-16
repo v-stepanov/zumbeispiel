@@ -3,7 +3,7 @@ function MetricsChart(chartId, valueMask, config) {
 
     var createChart = function() {
         self.chartOptions = {
-            title: "Chart for: " + valueMask,
+            title: config.title,
             hAxis: {
                 format: "hh:mm:ss"
             },
@@ -46,6 +46,15 @@ function MetricsChart(chartId, valueMask, config) {
 
     var appendData = function(newData) {
         var currentData = MetricsChart.dataHandler.extractDataFromJson(newData, valueMask);
+
+        if (config.summarize) {
+            var summarizedData = {};
+            summarizedData[valueMask] = 0;
+            for (var key in currentData) {
+                summarizedData[valueMask] += currentData[key];
+            }
+            currentData = summarizedData;
+        }
 
         trackColumnsAge(currentData);
         addNewColumnsIfNecessary(currentData);
@@ -111,14 +120,18 @@ function MetricsChart(chartId, valueMask, config) {
         return -1;
     };
 
-    config.intervalMs = typeof config.intervalMs === "undefined" ? 5000 : config.intervalMs;
-
     var self = this;
+    var utils = MetricsChart.utils;
 
     self.dataAge = {};
 
     self.dataTable = new google.visualization.DataTable();
     self.dataTable.addColumn("datetime", "X");
+
+    config.intervalMs = utils.valueOrDefault(config.intervalMs, 60000);
+    config.iterations = utils.valueOrDefault(config.iterations, 60);
+    config.summarize = utils.valueOrDefault(config.summarize, false);
+    config.title = utils.valueOrDefault(config.title, "");
 
     createChart();
     updateData();
@@ -157,6 +170,10 @@ function MetricsDataHandler() {
 }
 
 MetricsChart.utils = {
+
+    valueOrDefault: function(val, defaultVal) {
+        return typeof val !== 'undefined' ? val : defaultVal;
+    },
 
     randomInt: function(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;

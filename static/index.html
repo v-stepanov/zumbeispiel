@@ -11,6 +11,7 @@
 
     <script type="text/javascript" src="https://gist.github.com/penguinboy/762197/raw/df68d7225ec16aa63b3fdee23fdc7ac18e282786/Object%2520Flatten"></script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" crossorigin="anonymous"></script>
     <script type="text/javascript" src="zumbeispiel.js"></script>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" crossorigin="anonymous">
@@ -22,12 +23,19 @@
                 var id = "chart" + MetricsChart.utils.randomInt(0, 100000);
                 $("body").append("<div class='chart-container' id='" + id + "'></div>");
                 var $metricField = $("#metric-field");
+                var summarize = $("#summarize").is(":checked");
+                var chartName = $("#chart-name-field").val();
+                if (chartName == "") {
+                    chartName = "Chart for: " + $metricField.val();
+                }
                 new MetricsChart(
                         id,
                         $metricField.val(),
                         {
-                            "intervalMs": 60000,
-                            "iterations": 60
+                            "title": chartName,
+                            "intervalMs": 5000,
+                            "iterations": 60,
+                            "summarize": summarize
                         }
                 );
                 $metricField.val("");
@@ -38,15 +46,39 @@
 <body>
 <div class="container">
     <div class="row">
-        <div role="main">
+        <div class="col-md-12" role="main">
             <form class="form-horizontal">
                 <div class="form-group">
-                    <label for="metric-field" class="col-sm-1 control-label">Metric:</label>
-                    <div class="input-group col-sm-11">
+                    <label for="metric-field" class="col-sm-2 control-label">Metric:</label>
+                    <div class="col-sm-6">
                         <input id="metric-field" type="text" class="form-control" value="last5min.endpoints.*.status_codes.2??" autocomplete="off">
-                        <span class="input-group-btn">
-                            <button id="add-button" class="btn btn-success" type="button">Create Chart</button>
-                        </span>
+                    </div>
+                    <div class="col-sm-2">
+                        <button id="add-button" class="btn btn-success" type="button">Create Chart</button>
+                    </div>
+                    <div class="col-sm-2">
+                        <a role="button" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                            More Options >>
+                        </a>
+                    </div>
+                </div>
+            </form>
+            <form class="form-horizontal">
+                <div class="collapse" id="collapseExample">
+                    <div class="form-group">
+                        <label for="chart-name-field" class="col-sm-2 control-label">Chart Title:</label>
+                        <div class="col-sm-6">
+                            <input id="chart-name-field" type="text" class="form-control" value="" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <div class="checkbox">
+                                <label>
+                                    <input id="summarize" type="checkbox" autocomplete="off"> Summarize all matching values to a single series
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
