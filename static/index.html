@@ -20,25 +20,37 @@
     <script>
         $(document).ready(function() {
             $("#add-button").click(function () {
-                var id = "chart" + MetricsChart.utils.randomInt(0, 100000);
-                $("body").append("<div class='chart-container' id='" + id + "'></div>");
+                var chartContainerId = "chart" + MetricsChart.utils.randomInt(0, 100000);
+                $("body").append("<div class='chart-container' id='" + chartContainerId + "'></div>");
+
+                // take data from the form
                 var $metricField = $("#metric-field");
-                var summarize = $("#summarize").is(":checked");
-                var chartName = $("#chart-name-field").val();
+
+                var $chartName = $("#chart-name-field");
+                var chartName = $chartName.val();
                 if (chartName == "") {
                     chartName = "Chart for: " + $metricField.val();
                 }
+
+                var $summarize = $("#summarize");
+                var summarize = $summarize.is(":checked");
+
+                // create chart
                 new MetricsChart(
-                        id,
+                        chartContainerId,
                         $metricField.val(),
                         {
                             "title": chartName,
                             "intervalMs": 5000,
-                            "iterations": 60,
+                            "iterations": 300,
                             "summarize": summarize
                         }
                 );
+
+                // reset data in form
                 $metricField.val("");
+                $chartName.val("");
+                $summarize.attr('checked', false);
             });
         });
     </script>
