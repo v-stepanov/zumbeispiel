@@ -17,7 +17,11 @@ def index():
 
 @app.route('/metrics', methods=['GET'])
 def expose_metrics():
-    metrics = get_metrics()
+    try:
+        metrics = get_metrics()
+    except:
+        return Response({}, status=503)
+
     json_result = json.dumps(metrics, indent=2)
     return Response(json_result,
                     status=200,
@@ -29,6 +33,8 @@ def get_metrics():
     a_token = tokens.get('mytoken')
     response = requests.get('http://localhost:8081/metrics',
                             headers={'Authorization': 'Bearer {}'.format(a_token)})
+    if response.status_code != requests.codes.ok:
+        raise Exception('Got error response from metrics endpoint')
     return response.json()
 
 if __name__ == '__main__':
