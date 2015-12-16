@@ -55,6 +55,61 @@ function MetricsChart(chartId, valueMask, config) {
             }
             currentData = summarizedData;
         }
+        else {
+            if (config.seriesNames == "diff") {
+                var allParts = [];
+                var maxParts = 0;
+                for (key in currentData) {
+                    var parts = key.split(".");
+                    allParts.push(parts);
+                    if (parts.length > maxParts) {
+                        maxParts = parts.length;
+                    }
+                }
+                var matchingIndexes = [];
+                for (var j = 0; j < maxParts; j++) {
+                    var matches = true;
+                    var compareName = allParts[0][j];
+                    for (var i = 1; i < allParts.length; i++) {
+                        if (allParts[i].length <= j || compareName != allParts[i][j]) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    if (matches) {
+                        matchingIndexes.push(j);
+                    }
+                }
+                var renamedData = {};
+                for (key in currentData) {
+                    var newKey = "";
+                    var key_parts = key.split(".");
+                    for (var i = 0; i < key_parts.length; i++) {
+                        if (matchingIndexes.indexOf(i) == -1) {
+                            newKey = newKey + key_parts[i] + ".";
+                        }
+                    }
+                    newKey = newKey.slice(0, -1);
+                    renamedData[newKey] = currentData[key];
+                }
+                currentData = renamedData;
+            }
+            else if (config.seriesNames != "full") {
+                var renamedData = {};
+                var namePartsIndexes = config.seriesNames.split(".");
+                for (key in currentData) {
+                    var newKey = "";
+                    var key_parts = key.split(".");
+                    for (var i = 0; i < namePartsIndexes.length; i++) {
+                        var currentIndex = namePartsIndexes[i];
+                        newKey = newKey + key_parts[currentIndex] + ".";
+                    }
+                    newKey = newKey.slice(0, -1);
+                    renamedData[newKey] = currentData[key];
+                }
+                currentData = renamedData;
+            }
+        }
 
         trackColumnsAge(currentData);
         addNewColumnsIfNecessary(currentData);
@@ -132,6 +187,7 @@ function MetricsChart(chartId, valueMask, config) {
     config.iterations = utils.valueOrDefault(config.iterations, 60);
     config.summarize = utils.valueOrDefault(config.summarize, false);
     config.title = utils.valueOrDefault(config.title, "");
+    config.seriesNames = utils.valueOrDefault(config.seriesNames, "full");
 
     createChart();
     updateData();

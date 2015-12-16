@@ -35,6 +35,11 @@
                 var $summarize = $("#summarize");
                 var summarize = $summarize.is(":checked");
 
+                var useName = $("input:radio[name ='useName']:checked").val();
+                if (useName == "composed") {
+                    useName = $("#composed-name").val();
+                }
+
                 // create chart
                 new MetricsChart(
                         chartContainerId,
@@ -43,7 +48,8 @@
                             "title": chartName,
                             "intervalMs": 5000,
                             "iterations": 300,
-                            "summarize": summarize
+                            "summarize": summarize,
+                            "seriesNames": useName
                         }
                 );
 
@@ -81,6 +87,31 @@
                         <label for="chart-name-field" class="col-sm-2 control-label">Chart Title:</label>
                         <div class="col-sm-6">
                             <input id="chart-name-field" type="text" class="form-control" value="" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="composed-name" class="col-sm-2 control-label">Series Naming:</label>
+                        <div class="col-sm-2">
+                            <div class="input-group">
+                                <span class="input-group-addon">
+                                  <input name="useName" type="radio" value="composed">
+                                </span>
+                                <input id="composed-name" type="text" class="form-control" autocomplete="off" placeholder="E.g.: 2.5">
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="checkbox">
+                                <label>
+                                    <input name="useName" type="radio" autocomplete="off" value="diff"> Use diff as name
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-sm-2">
+                            <div class="checkbox">
+                                <label>
+                                    <input name="useName" type="radio" autocomplete="off" value="full" checked="checked"> Use full name
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
