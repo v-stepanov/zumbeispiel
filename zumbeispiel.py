@@ -8,16 +8,11 @@ import json
 tokens.manage('mytoken', ['uid'])
 tokens.start()
 
-app = Flask(__name__, static_url_path='/static')
+app = Flask(__name__, static_url_path='')
 
 @app.route('/')
 def index():
-    print('blah')
     return app.send_static_file('index.html')
-
-@app.route('/zumbeispiel.js')
-def jsFile():
-    return app.send_static_file('zumbeispiel.js')
 
 @app.route('/metrics', methods=['GET'])
 def expose_metrics():
