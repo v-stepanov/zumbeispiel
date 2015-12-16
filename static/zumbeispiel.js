@@ -1,17 +1,17 @@
 
-function MetricsChart(chartId, valueMask, metricsUrls, config) {
+function MetricsChart(chartId, valueMask, config) {
 
     var createChart = function() {
         self.chartOptions = {
             title: "Chart for: " + valueMask,
             hAxis: {
-                format: 'hh:mm:ss'
+                format: "hh:mm:ss"
             },
             vAxis: {
-                title: 'requests'
+                title: "requests"
             },
             legend: {
-                position: 'right'
+                position: "right"
             },
             fontSize: 14,
             width: "100%",
@@ -28,13 +28,12 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
 
     var updateData = function() {
         $.ajax({
-            url: metricsUrls,
+            url: "/metrics",
             type: "GET",
             success: function(data) {
                 appendData(data);
             },
             complete: function() {
-                console.log("complete");
                 setTimeout(updateData, config.intervalMs);
             }
         });
@@ -112,14 +111,14 @@ function MetricsChart(chartId, valueMask, metricsUrls, config) {
         return -1;
     };
 
-    config.intervalMs = typeof config.intervalMs === 'undefined' ? 5000 : config.intervalMs;
+    config.intervalMs = typeof config.intervalMs === "undefined" ? 5000 : config.intervalMs;
 
     var self = this;
 
     self.dataAge = {};
 
     self.dataTable = new google.visualization.DataTable();
-    self.dataTable.addColumn('datetime', 'X');
+    self.dataTable.addColumn("datetime", "X");
 
     createChart();
     updateData();
@@ -144,9 +143,6 @@ function MetricsDataHandler() {
                 matchingData[jsonPath] = flattenJson[jsonPath];
             }
         }
-        console.log("data matching mask:");
-        console.log(matchingData);
-
         return matchingData;
     };
 
@@ -156,28 +152,18 @@ function MetricsDataHandler() {
         regexpMask = regexpMask.replace(/\*/g, ".+");
         regexpMask = regexpMask.replace(/\?/g, ".?");
         regexpMask = "^" + regexpMask + "$";
-        console.log("regexp mask:");
-        console.log(regexpMask);
-
         return new RegExp(regexpMask);
     };
 }
 
-blah = 0;
-
 MetricsChart.utils = {
-
-    randomColor: function() {
-        return "#"+((1<<24)*Math.random()|0).toString(16);
-    },
 
     randomInt: function(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     },
 
     newDummyData: function() {
-        blah++;
-        var json= {
+        return {
             "last5min": {
                 "endpoints": {
                     "post_events": {
@@ -209,13 +195,5 @@ MetricsChart.utils = {
                 }
             }
         };
-        if (blah < 3) {
-            json["last5min"]["endpoints"]["blah"] = {
-                "status_codes": {
-                    "201": MetricsChart.utils.randomInt(100, 200)
-                }
-            }
-        }
-        return json;
     }
 };
