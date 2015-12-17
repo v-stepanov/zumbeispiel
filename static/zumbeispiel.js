@@ -1,5 +1,5 @@
 
-function MetricsChart(chartId, valueMask, config) {
+function MetricsChart(chartId, valueMask, metricsUrl, config) {
 
     var createChart = function() {
         self.chartOptions = {
@@ -20,12 +20,7 @@ function MetricsChart(chartId, valueMask, config) {
                 left: "5%",
                 width: "75%",
                 height: "80%"
-            }/*,
-            backgroundColor: {
-                fill: "#f9f9f9",
-                stroke: "#cccccc",
-                strokeWidth: 1
-            }*/
+            }
         };
 
         self.chart = new google.visualization.LineChart(document.getElementById(chartId));
@@ -39,7 +34,7 @@ function MetricsChart(chartId, valueMask, config) {
     var updateData = function() {
         if (!self.removed) {
             $.ajax({
-                url: "/metrics",
+                url: metricsUrl,
                 type: "GET",
                 success: function (data) {
                     appendData(data);

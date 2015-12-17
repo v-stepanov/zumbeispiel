@@ -28,11 +28,23 @@
                 // take data from the form
                 var $metricField = $("#metric-field");
 
-                var $chartName = $("#chart-name-field");
-                var chartName = $chartName.val();
+                var chartName = $("#chart-name-field").val();
                 if (chartName == "") {
                     chartName = "Chart for: " + $metricField.val();
                 }
+
+                var fetchPeriod = $("#fetch-period-field").val();
+                if (fetchPeriod == "") {
+                    fetchPeriod = 5;
+                }
+                fetchPeriod = parseInt(fetchPeriod, 10) * 1000;
+
+                var timeRange = $("#time-range-field").val();
+                if (timeRange == "") {
+                    timeRange = 30;
+                }
+                timeRange = parseInt(timeRange, 10) * 60 * 1000;
+                var iterations = Math.floor(timeRange / fetchPeriod);
 
                 var $summarize = $("#summarize");
                 var summarize = $summarize.is(":checked");
@@ -46,10 +58,11 @@
                 var metricsChart = new MetricsChart(
                         chartContainerId,
                         $metricField.val(),
+                        "/metrics",
                         {
                             "title": chartName,
-                            "intervalMs": 5000,
-                            "iterations": 300,
+                            "intervalMs": fetchPeriod,
+                            "iterations": iterations,
                             "summarize": summarize,
                             "seriesNames": useName
                         }
@@ -70,9 +83,9 @@
                 $body.append($deleteButton);
 
                 // reset data in form
-                $metricField.val("");
-                $chartName.val("");
+                $("input").val("");
                 $summarize.attr('checked', false);
+                $("#use-full-name").prop("checked", true);
             };
 
             $("#add-button").click(addChart);
@@ -86,6 +99,19 @@
             $(document).on("keypress", "form", function(event) {
                 return event.keyCode != 13;
             });
+
+            $.ajax({
+                url: "/metrics",
+                type: "GET",
+                success: function (data) {
+                    var availableData = flattenObject(data);
+                    $dataContent = $("#available-data-content");
+                    for (var key in availableData) {
+                        $dataContent.append(key).append("<br>");
+                    }
+                }
+            });
+
         });
     </script>
 </head>
@@ -112,9 +138,19 @@
             <form class="form-horizontal">
                 <div class="collapse" id="collapseExample">
                     <div class="form-group">
+                        <label for="fetch-period-field" class="col-sm-2 control-label">Fetch Period (s):</label>
+                        <div class="col-sm-2">
+                            <input id="fetch-period-field" type="text" class="form-control" value="" autocomplete="off" placeholder="Default is 5 sec">
+                        </div>
+                        <label for="time-range-field" class="col-sm-2 control-label">Time Range (min):</label>
+                        <div class="col-sm-2">
+                            <input id="time-range-field" type="text" class="form-control" value="" autocomplete="off" placeholder="Default is 30 min">
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label for="chart-name-field" class="col-sm-2 control-label">Chart Title:</label>
                         <div class="col-sm-6">
-                            <input id="chart-name-field" type="text" class="form-control" value="" autocomplete="off">
+                            <input id="chart-name-field" type="text" class="form-control" value="" autocomplete="off" placeholder="Metrics Mask is used as title by default">
                         </div>
                     </div>
                     <div class="form-group">
@@ -122,7 +158,7 @@
                         <div class="col-sm-2">
                             <div class="input-group">
                                 <span class="input-group-addon">
-                                  <input name="useName" type="radio" value="composed">
+                                    <input name="useName" type="radio" value="composed" title="use composed">
                                 </span>
                                 <input id="composed-name" type="text" class="form-control" autocomplete="off" placeholder="E.g.: 2.5">
                             </div>
@@ -137,7 +173,7 @@
                         <div class="col-sm-2">
                             <div class="checkbox">
                                 <label>
-                                    <input name="useName" type="radio" autocomplete="off" value="full" checked="checked"> Use full name
+                                    <input id="use-full-name" name="useName" type="radio" autocomplete="off" value="full" checked="checked"> Use full name
                                 </label>
                             </div>
                         </div>
@@ -149,6 +185,17 @@
                                     <input id="summarize" type="checkbox" autocomplete="off"> Summarize all matching values to a single series
                                 </label>
                             </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <a role="button" data-toggle="collapse" href="#available-data" aria-expanded="false" aria-controls="available-data">
+                                Show Available Data >>
+                            </a>
+                        </div>
+                    </div>
+                    <div id="available-data" class="panel panel-default col-sm-offset-2 col-sm-6 collapse">
+                        <div id="available-data-content" class="panel-body">
                         </div>
                     </div>
                 </div>
