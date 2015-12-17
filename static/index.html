@@ -19,9 +19,11 @@
 
     <script>
         $(document).ready(function() {
-            $("#add-button").click(function () {
+            var addChart = function() {
+                // create chart container div
+                var $body = $("body");
                 var chartContainerId = "chart" + MetricsChart.utils.randomInt(0, 100000);
-                $("body").append("<div class='chart-container' id='" + chartContainerId + "'></div>");
+                $body.append("<div class='chart-container' id='" + chartContainerId + "'></div>");
 
                 // take data from the form
                 var $metricField = $("#metric-field");
@@ -41,7 +43,7 @@
                 }
 
                 // create chart
-                new MetricsChart(
+                var metricsChart = new MetricsChart(
                         chartContainerId,
                         $metricField.val(),
                         {
@@ -53,10 +55,36 @@
                         }
                 );
 
+                // create delete button
+                var $deleteButton = $(
+                        "<div class='remove-container'>" +
+                            "<div class='btn btn-danger btn-xs'>" +
+                                "<span class=' glyphicon glyphicon-remove'></span>&nbsp;Delete" +
+                            "</div>" +
+                        "</div>");
+                $deleteButton.click(function() {
+                    $("#" + chartContainerId).remove();
+                    $deleteButton.remove();
+                    metricsChart.remove();
+                });
+                $body.append($deleteButton);
+
                 // reset data in form
                 $metricField.val("");
                 $chartName.val("");
                 $summarize.attr('checked', false);
+            };
+
+            $("#add-button").click(addChart);
+
+            $(document).keypress(function(e) {
+                if(e.which == 13) {
+                    alert('You pressed enter!');
+                }
+            });
+
+            $(document).on("keypress", "form", function(event) {
+                return event.keyCode != 13;
             });
         });
     </script>
@@ -67,12 +95,12 @@
         <div class="col-md-12" role="main">
             <form class="form-horizontal">
                 <div class="form-group">
-                    <label for="metric-field" class="col-sm-2 control-label">Metric:</label>
+                    <label for="metric-field" class="col-sm-2 control-label">Metrics Mask:</label>
                     <div class="col-sm-6">
                         <input id="metric-field" type="text" class="form-control" value="last5min.endpoints.*.status_codes.2??" autocomplete="off">
                     </div>
                     <div class="col-sm-2">
-                        <button id="add-button" class="btn btn-success" type="button">Create Chart</button>
+                        <button id="add-button" class="btn btn-success" type="button">Add Chart</button>
                     </div>
                     <div class="col-sm-2">
                         <a role="button" data-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">

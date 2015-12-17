@@ -20,23 +20,35 @@ function MetricsChart(chartId, valueMask, config) {
                 left: "5%",
                 width: "75%",
                 height: "80%"
-            }
+            }/*,
+            backgroundColor: {
+                fill: "#f9f9f9",
+                stroke: "#cccccc",
+                strokeWidth: 1
+            }*/
         };
 
         self.chart = new google.visualization.LineChart(document.getElementById(chartId));
     };
 
+    this.remove = function() {
+        delete self.chart;
+        self.removed = true;
+    };
+
     var updateData = function() {
-        $.ajax({
-            url: "/metrics",
-            type: "GET",
-            success: function(data) {
-                appendData(data);
-            },
-            complete: function() {
-                setTimeout(updateData, config.intervalMs);
-            }
-        });
+        if (!self.removed) {
+            $.ajax({
+                url: "/metrics",
+                type: "GET",
+                success: function (data) {
+                    appendData(data);
+                },
+                complete: function () {
+                    setTimeout(updateData, config.intervalMs);
+                }
+            });
+        }
         // using dummy data:
         /*
         appendData(MetricsChart.utils.newDummyData());
@@ -44,70 +56,90 @@ function MetricsChart(chartId, valueMask, config) {
         */
     };
 
+    var summarizeData = function(currentData) {
+        var summarizedData = {};
+        summarizedData[valueMask] = 0;
+        for (var key in currentData) {
+            summarizedData[valueMask] += currentData[key];
+        }
+        currentData = summarizedData;
+        return currentData;
+    };
+
+    var applyDiffNaming = function(currentData) {
+        var allParts = [];
+        var maxParts = 0;
+        for (key in currentData) {
+            var parts = key.split(".");
+            allParts.push(parts);
+            if (parts.length > maxParts) {
+                maxParts = parts.length;
+            }
+        }
+        var matchingIndexes = [];
+        for (var j = 0; j < maxParts; j++) {
+            var matches = true;
+            var compareName = allParts[0][j];
+            for (i = 1; i < allParts.length; i++) {
+                if (allParts[i].length <= j || compareName != allParts[i][j]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) {
+                matchingIndexes.push(j);
+            }
+        }
+        var renamedData = {};
+        for (key in currentData) {
+            var newKey = "";
+            var key_parts = key.split(".");
+            for (var i = 0; i < key_parts.length; i++) {
+                if (matchingIndexes.indexOf(i) == -1) {
+                    newKey = newKey + key_parts[i] + ".";
+                }
+            }
+            newKey = newKey.slice(0, -1);
+            renamedData[newKey] = currentData[key];
+        }
+        return renamedData;
+    };
+
+    var applyComposedNaming = function(currentData) {
+        var renamedData = {};
+        var namePartsIndexes = config.seriesNames.split(".");
+        for (var key in currentData) {
+            var newKey = "";
+            var key_parts = key.split(".");
+            for (var i = 0; i < namePartsIndexes.length; i++) {
+                var currentIndex = namePartsIndexes[i];
+                if (key_parts.length < currentIndex) {
+                    newKey = newKey + key_parts[currentIndex] + ".";
+                }
+            }
+            if (newKey == "") {
+                newKey = key;
+            }
+            else {
+                newKey = newKey.slice(0, -1);
+            }
+            renamedData[newKey] = currentData[key];
+        }
+        return renamedData;
+    };
+
     var appendData = function(newData) {
         var currentData = MetricsChart.dataHandler.extractDataFromJson(newData, valueMask);
 
         if (config.summarize) {
-            var summarizedData = {};
-            summarizedData[valueMask] = 0;
-            for (var key in currentData) {
-                summarizedData[valueMask] += currentData[key];
-            }
-            currentData = summarizedData;
+            currentData = summarizeData(currentData);
         }
         else {
             if (config.seriesNames == "diff") {
-                var allParts = [];
-                var maxParts = 0;
-                for (key in currentData) {
-                    var parts = key.split(".");
-                    allParts.push(parts);
-                    if (parts.length > maxParts) {
-                        maxParts = parts.length;
-                    }
-                }
-                var matchingIndexes = [];
-                for (var j = 0; j < maxParts; j++) {
-                    var matches = true;
-                    var compareName = allParts[0][j];
-                    for (var i = 1; i < allParts.length; i++) {
-                        if (allParts[i].length <= j || compareName != allParts[i][j]) {
-                            matches = false;
-                            break;
-                        }
-                    }
-                    if (matches) {
-                        matchingIndexes.push(j);
-                    }
-                }
-                var renamedData = {};
-                for (key in currentData) {
-                    var newKey = "";
-                    var key_parts = key.split(".");
-                    for (var i = 0; i < key_parts.length; i++) {
-                        if (matchingIndexes.indexOf(i) == -1) {
-                            newKey = newKey + key_parts[i] + ".";
-                        }
-                    }
-                    newKey = newKey.slice(0, -1);
-                    renamedData[newKey] = currentData[key];
-                }
-                currentData = renamedData;
+                currentData = applyDiffNaming(currentData);
             }
             else if (config.seriesNames != "full") {
-                var renamedData = {};
-                var namePartsIndexes = config.seriesNames.split(".");
-                for (key in currentData) {
-                    var newKey = "";
-                    var key_parts = key.split(".");
-                    for (var i = 0; i < namePartsIndexes.length; i++) {
-                        var currentIndex = namePartsIndexes[i];
-                        newKey = newKey + key_parts[currentIndex] + ".";
-                    }
-                    newKey = newKey.slice(0, -1);
-                    renamedData[newKey] = currentData[key];
-                }
-                currentData = renamedData;
+                currentData = applyComposedNaming(currentData);
             }
         }
 
